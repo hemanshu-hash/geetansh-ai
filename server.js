@@ -33,7 +33,12 @@ app.get('/api/status', (_request, response) => {
   const configured = provider === 'ollama'
     || (provider === 'openai' && Boolean(process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'put-your-api-key-here'))
     || (provider === 'gemini' && Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'put-your-api-key-here'));
-  response.json({ provider, ready: configured, configured });
+  response.json({
+    provider,
+    model: provider === 'gemini' ? process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite' : provider === 'ollama' ? process.env.OLLAMA_MODEL || 'llama3.2' : process.env.OPENAI_MODEL || 'gpt-4.1-mini',
+    ready: configured,
+    configured
+  });
 });
 
 app.post('/api/chat', async (request, response) => {
@@ -74,13 +79,23 @@ app.post('/api/chat', async (request, response) => {
         baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
       });
       const result = await client.chat.completions.create({
-        model: process.env.GEMINI_MODEL || 'gemini-3.8-flash',
+        model: process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite',
         messages: [
           { role: 'system', content: 'You are Geetansh AI, a helpful personal phone assistant. Be clear, friendly, and concise.' },
           ...conversation
-        ]
+        ],
+        stream: true,
+        extra_body: { google: { thinking_config: { thinking_level: 'low' } } }
       });
-      reply = result.choices[0]?.message?.content;
+      response.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+      response.setHeader('Cache-Control', 'no-cache, no-transform');
+      response.setHeader('Connection', 'keep-alive');
+      for await (const chunk of result) {
+        const text = chunk.choices[0]?.delta?.content;
+        if (text) response.write(`data: ${JSON.stringify({ text })}\n\n`);
+      }
+      response.write('data: [DONE]\n\n');
+      return response.end();
     } else {
       if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'put-your-api-key-here') {
         return response.status(503).json({ error: 'Configure OPENAI_API_KEY in the hosting service environment to enable live replies.' });
@@ -97,6 +112,10 @@ app.post('/api/chat', async (request, response) => {
     response.json({ reply, provider });
   } catch (error) {
     console.error('Chat request failed:', error.message);
+    if (response.headersSent) {
+      response.write(`event: error\ndata: ${JSON.stringify({ error: error.message || 'The AI request failed.' })}\n\n`);
+      return response.end();
+    }
     response.status(502).json({ error: provider === 'ollama' && error.cause ? 'Could not reach Ollama. Start Ollama and check its local address.' : error.message || 'The AI request failed.' });
   }
 });

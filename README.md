@@ -24,7 +24,7 @@ Render cannot reach Ollama at `127.0.0.1` on your computer. The Render blueprint
 
 ## AI providers
 
-For Google Gemini, create a key in Google AI Studio. Set `AI_PROVIDER=gemini`, `GEMINI_API_KEY`, and optionally `GEMINI_MODEL`. The server uses Google's OpenAI-compatible Chat Completions endpoint, and the key stays on the server. Google offers a free tier for selected models with project- and model-specific rate limits. Check the active quota in AI Studio. Google states that free-tier content may be used to improve its products, so avoid sending sensitive content on that tier. See [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing), [rate limits](https://ai.google.dev/gemini-api/docs/rate-limits), and [OpenAI compatibility](https://ai.google.dev/gemini-api/docs/openai).
+For Google Gemini, create a key in Google AI Studio. Set `AI_PROVIDER=gemini`, `GEMINI_API_KEY`, and optionally `GEMINI_MODEL` (defaults to `gemini-3.5-flash-lite`). Gemini responses stream into the chat as they arrive, with low thinking effort for faster responses. The key stays on the server. Google offers a free tier for selected models with project- and model-specific rate limits. Check the active quota in AI Studio. Google states that free-tier content may be used to improve its products, so avoid sending sensitive content on that tier. See [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing), [rate limits](https://ai.google.dev/gemini-api/docs/rate-limits), and [OpenAI compatibility](https://ai.google.dev/gemini-api/docs/openai).
 
 For OpenAI, set `AI_PROVIDER=openai`, `OPENAI_API_KEY`, and optionally `OPENAI_MODEL`. API access and billing are separate from a ChatGPT subscription.
 

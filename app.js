@@ -71,13 +71,39 @@ function demoReply(prompt) {
   return 'Thanks for sharing that with me. I’m Geetansh AI, and this preview is running in demo mode, so I can only offer sample replies right now. Once a live AI service is connected, I’ll be able to respond to your message in a much more useful, specific way.\n\nFor now, try asking me to plan your day, teach you something, or brainstorm a project idea. ✨';
 }
 
-async function getAssistantReply(chat) {
+async function getAssistantReply(chat, onChunk) {
   if (!aiReady) throw new Error('Live AI is not configured yet. Add your API key to .env, then restart the server.');
   const response = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ messages: chat.messages.map(({ role, content }) => ({ role, content })) })
   });
+  if (response.headers.get('content-type')?.includes('text/event-stream')) {
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || 'The AI request failed.');
+    }
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let reply = '';
+    while (true) {
+      const { value, done } = await reader.read();
+      buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+      const events = buffer.split('\n\n');
+      buffer = events.pop() || '';
+      for (const event of events) {
+        const data = event.split('\n').find(line => line.startsWith('data: '))?.slice(6);
+        if (!data || data === '[DONE]') continue;
+        const chunk = JSON.parse(data);
+        if (chunk.error) throw new Error(chunk.error);
+        reply += chunk.text || '';
+        onChunk?.(reply);
+      }
+      if (done) break;
+    }
+    return reply;
+  }
   const result = await response.json();
   if (!response.ok) throw new Error(result.error || 'The AI request failed.');
   return result.reply;
@@ -99,7 +125,7 @@ async function checkAIStatus() {
           : 'Add OPENAI_API_KEY to the server environment to enable live AI replies.';
     status.classList.toggle('connected', aiReady);
     document.querySelector('#providerName').textContent = aiReady
-      ? (aiProvider === 'ollama' ? 'Local model connected' : aiProvider === 'gemini' ? 'Google Gemini connected' : 'OpenAI connected')
+      ? (aiProvider === 'ollama' ? `Local · ${result.model}` : aiProvider === 'gemini' ? `Gemini · ${result.model}` : `OpenAI · ${result.model}`)
       : 'AI not configured';
     document.querySelector('.demo-note').innerHTML = `<span class="demo-dot${aiReady ? ' connected-dot' : ''}"></span> ${aiReady ? 'Live AI' : 'Not connected'}`;
   } catch {
@@ -148,9 +174,22 @@ function sendMessage(value) {
     pending.remove();
     let reply;
     try {
-      reply = aiReady ? await getAssistantReply(chat) : demoReply(prompt);
+      if (aiReady && aiProvider === 'gemini') {
+        const assistantRow = addMessage('', 'assistant');
+        pending.remove();
+        reply = await getAssistantReply(chat, text => {
+          assistantRow.querySelector('.bubble').textContent = text;
+          assistantRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+      } else {
+        reply = aiReady ? await getAssistantReply(chat) : demoReply(prompt);
+      }
     } catch (error) {
-      addMessage(`I couldn’t get a reply: ${error.message}\n\nYour message is still here. Please try again.`, 'assistant');
+      if (messages.lastElementChild?.classList.contains('assistant') && !messages.lastElementChild.querySelector('.typing')) {
+        messages.lastElementChild.querySelector('.bubble').textContent += `\n\nConnection interrupted: ${error.message}`;
+      } else {
+        addMessage(`I couldn’t get a reply: ${error.message}\n\nYour message is still here. Please try again.`, 'assistant');
+      }
       sending = false;
       document.querySelector('#sendButton').disabled = false;
       saveChats();
