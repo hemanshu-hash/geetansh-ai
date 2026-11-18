@@ -173,13 +173,14 @@ function sendMessage(value) {
   setTimeout(async () => {
     pending.remove();
     let reply;
+    let streamedRow = null;
     try {
       if (aiReady && aiProvider === 'gemini') {
-        const assistantRow = addMessage('', 'assistant');
-        pending.remove();
+        streamedRow = addMessage('', 'assistant');
+        streamedRow.classList.add('streaming');
         reply = await getAssistantReply(chat, text => {
-          assistantRow.querySelector('.bubble').textContent = text;
-          assistantRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          streamedRow.querySelector('.bubble').textContent = text;
+          streamedRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         });
       } else {
         reply = aiReady ? await getAssistantReply(chat) : demoReply(prompt);
@@ -197,7 +198,11 @@ function sendMessage(value) {
     }
     chat.messages.push({ role: 'assistant', content: reply, files: [] });
     chat.updatedAt = Date.now();
-    addMessage(reply, 'assistant');
+    if (streamedRow) {
+      streamedRow.classList.remove('streaming');
+    } else {
+      addMessage(reply, 'assistant');
+    }
     sending = false;
     document.querySelector('#sendButton').disabled = false;
     saveChats();
