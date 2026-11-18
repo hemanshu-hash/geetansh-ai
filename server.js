@@ -63,7 +63,7 @@ app.post('/api/chat', async (request, response) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: process.env.OLLAMA_MODEL || 'llama3.2',
-          messages: [{ role: 'system', content: 'You are Geetansh AI, a helpful personal phone assistant. Be clear, friendly, and concise.' }, ...conversation],
+          messages: [{ role: 'system', content: 'You are Hemanshu AI, a helpful personal assistant. Be clear, friendly, and concise.' }, ...conversation],
           stream: false
         })
       });
@@ -81,7 +81,7 @@ app.post('/api/chat', async (request, response) => {
       const result = await client.chat.completions.create({
         model: process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite',
         messages: [
-          { role: 'system', content: 'You are Geetansh AI, a helpful personal phone assistant. Be clear, friendly, and concise.' },
+          { role: 'system', content: 'You are Hemanshu AI, a helpful personal assistant. Be clear, friendly, and concise.' },
           ...conversation
         ],
         stream: true,
@@ -103,7 +103,7 @@ app.post('/api/chat', async (request, response) => {
       const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
       const result = await client.responses.create({
         model: process.env.OPENAI_MODEL || 'gpt-4.1-mini',
-        instructions: 'You are Geetansh AI, a helpful personal phone assistant. Be clear, friendly, and concise.',
+        instructions: 'You are Hemanshu AI, a helpful personal assistant. Be clear, friendly, and concise.',
         input: conversation
       });
       reply = result.output_text;
@@ -121,5 +121,5 @@ app.post('/api/chat', async (request, response) => {
 });
 
 app.listen(port, () => {
-  console.log(`Geetansh AI is running at http://localhost:${port}`);
+  console.log(`Hemanshu AI is running at http://localhost:${port}`);
 });

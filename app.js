@@ -8,7 +8,7 @@ const attachmentInput = document.querySelector('#attachmentInput');
 const STORAGE_KEY = 'geetansh-ai-chats-v1';
 const SETTINGS_KEY = 'geetansh-ai-settings-v1';
 let chats = readStorage(STORAGE_KEY, []);
-let settings = readStorage(SETTINGS_KEY, { name: 'Geetansh', theme: 'dark' });
+let settings = readStorage(SETTINGS_KEY, { name: 'Hemanshu', theme: 'dark' });
 let currentChatId = null;
 let toastTimer;
 let attachedFiles = [];
@@ -63,12 +63,12 @@ function addMessage(content, role, fileNames = []) {
 
 function demoReply(prompt) {
   const normalized = prompt.toLowerCase();
-  if (/hello|hi\b|hey|good morning/.test(normalized)) return 'Hey! 👋 I’m Geetansh AI, your personal assistant. What would you like to chat about?';
+  if (/hello|hi\b|hey|good morning/.test(normalized)) return 'Hey! 👋 I’m Hemanshu AI, your personal assistant. What would you like to chat about?';
   if (/plan|productive|routine|day/.test(normalized)) return 'Here’s a simple way to shape your day:\n\n1. Pick your one most important task.\n2. Work on it for 25 minutes, then take a short break.\n3. Group small errands together instead of switching between them.\n4. Leave a little room for rest and unexpected things.\n\nWhat’s the main thing you’d like to get done today?';
   if (/teach|fascinat|learn|something/.test(normalized)) return 'Here’s a curious one: the smell after rain has a name — petrichor. It comes partly from oils released by plants during dry spells, and partly from a soil-dwelling bacteria. Raindrops help send those tiny scent-carrying particles into the air. 🌧️';
   if (/creative|brainstorm|idea|project/.test(normalized)) return 'Let’s make something! A few starting points:\n\n• Build a tiny website that solves one everyday annoyance.\n• Make a personal playlist with a story behind each song.\n• Start a “one photo a day” journal around a theme.\n\nTell me what you’re into, and I’ll tailor some ideas for you.';
-  if (/what can you|help|who are you/.test(normalized)) return 'I’m Geetansh AI — a chat assistant built for you. I can help brainstorm ideas, explain concepts, plan a day, draft messages, or just have a conversation.\n\nRight now I’m running in demo mode, so my replies are examples rather than live AI answers. When you’re ready, we can connect a real AI service.';
-  return 'Thanks for sharing that with me. I’m Geetansh AI, and this preview is running in demo mode, so I can only offer sample replies right now. Once a live AI service is connected, I’ll be able to respond to your message in a much more useful, specific way.\n\nFor now, try asking me to plan your day, teach you something, or brainstorm a project idea. ✨';
+  if (/what can you|help|who are you/.test(normalized)) return 'I’m Hemanshu AI — a chat assistant built for you. I can help brainstorm ideas, explain concepts, plan a day, draft messages, or just have a conversation.\n\nRight now I’m running in demo mode, so my replies are examples rather than live AI answers. When you’re ready, we can connect a real AI service.';
+  return 'Thanks for sharing that with me. I’m Hemanshu AI, and this preview is running in demo mode, so I can only offer sample replies right now. Once a live AI service is connected, I’ll be able to respond to your message in a much more useful, specific way.\n\nFor now, try asking me to plan your day, teach you something, or brainstorm a project idea. ✨';
 }
 
 async function getAssistantReply(chat, onChunk) {
@@ -289,7 +289,7 @@ function renderAttachments() {
 }
 
 function openSettings() {
-  const name = window.prompt('What should Geetansh AI call you?', settings.name);
+  const name = window.prompt('What should Hemanshu AI call you?', settings.name);
   if (name?.trim()) {
     settings.name = name.trim();
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
@@ -311,13 +311,13 @@ document.querySelector('#menuButton').addEventListener('click', () => document.q
 document.querySelector('#shareButton').addEventListener('click', async () => {
   const chat = chats.find(item => item.id === currentChatId);
   if (!chat) { showToast('Start a chat first, then you can export it'); return; }
-  const transcript = chat.messages.map(message => `${message.role === 'user' ? settings.name : 'Geetansh AI'}: ${message.content}`).join('\n\n');
+  const transcript = chat.messages.map(message => `${message.role === 'user' ? settings.name : 'Hemanshu AI'}: ${message.content}`).join('\n\n');
   try {
     const exportBlob = new Blob([transcript], { type: 'text/plain;charset=utf-8' });
     const downloadUrl = URL.createObjectURL(exportBlob);
     const link = document.createElement('a');
     link.href = downloadUrl;
-    link.download = `${chat.title.replace(/[^\p{L}\p{N}-]+/gu, '-').replace(/^-|-$/g, '') || 'geetansh-chat'}.txt`;
+    link.download = `${chat.title.replace(/[^\p{L}\p{N}-]+/gu, '-').replace(/^-|-$/g, '') || 'hemanshu-chat'}.txt`;
     link.click();
     URL.revokeObjectURL(downloadUrl);
     showToast('Conversation exported');
@@ -354,6 +354,10 @@ document.addEventListener('keydown', event => {
   if (event.key === 'Escape') document.querySelector('#sidebar').classList.remove('open');
 });
 
+if (!settings.name || settings.name === 'Geetansh') {
+  settings.name = 'Hemanshu';
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+}
 document.querySelector('#profileName').textContent = settings.name;
 document.querySelector('#welcomeName').textContent = `${settings.name}.`;
 document.querySelector('#profileAvatar').textContent = settings.name[0].toUpperCase();

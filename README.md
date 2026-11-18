@@ -1,6 +1,6 @@
-# Geetansh AI
+# Hemanshu AI
 
-Phone-friendly chat website with a Node backend. Provider API keys stay on the server.
+Phone-friendly Hemanshu AI chat website with a Node backend. Provider API keys stay on the server.
 
 ## Start locally
 
